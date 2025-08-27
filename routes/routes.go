@@ -20,17 +20,16 @@ func Setup() *gin.Engine {
 	api := r.Group("/api")
 	api.Use(middlewares.Auth(""))
 	{
-		api.GET("/me", func (c *gin.Context)  {
-			c.JSON(200, gin.H{"ok": true})
-		})
+		api.GET("/me", controllers.Me)
 	}
 
 	admin := r.Group("/api/admin")
 	admin.Use(middlewares.Auth("admin"))
 	{
-		admin.GET("/dashboard", func(c *gin.Context) {
-			c.JSON(200, gin.H{"admin": true})
-		})
+		admin.GET("/dashboard", controllers.AdminDashboard)
+
+		admin.GET("/users", controllers.GetAllUser)
+		admin.GET("/users/:id", controllers.GetUserById)
 	}
 
 	return r
