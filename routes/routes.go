@@ -30,6 +30,10 @@ func Setup() *gin.Engine {
 
 		admin.GET("/users", controllers.GetAllUser)
 		admin.GET("/users/:id", controllers.GetUserById)
+
+		admin.GET("/events", controllers.ListEvents)
+		admin.POST("/events", controllers.CreateEvent)
+		admin.GET("/events/:id", controllers.GetEvent)
 	}
 
 	return r
