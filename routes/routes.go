@@ -21,6 +21,14 @@ func Setup() *gin.Engine {
 	api.Use(middlewares.Auth(""))
 	{
 		api.GET("/me", controllers.Me)
+
+		api.POST("/events/:id/join", controllers.JoinEvent)
+		api.GET("/tickets", controllers.MyTickets)
+
+		api.GET("/events/:id/quizzes", controllers.GetQuizByEvent)
+
+		api.POST("/events/:id/quizzes/submit", controllers.SubmitQuiz)
+		api.GET("/quizzes/submissions/me", controllers.MyQuizSubmissions)
 	}
 
 	admin := r.Group("/api/admin")
@@ -34,6 +42,13 @@ func Setup() *gin.Engine {
 		admin.GET("/events", controllers.ListEvents)
 		admin.POST("/events", controllers.CreateEvent)
 		admin.GET("/events/:id", controllers.GetEvent)
+
+		admin.GET("/tickets", controllers.ListTickets)
+		admin.PUT("/tickets/:id/approve", controllers.ApproveTicket)
+		admin.PUT("/tickets/:id/reject", controllers.RejectTicket)
+
+		api.POST("/events/:id/quizzes", controllers.CreateQuiz)
+		admin.GET("/events/:id/quizzes/submissions", controllers.ListQuizSubmissionsByEvent)
 	}
 
 	return r
