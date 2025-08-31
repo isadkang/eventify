@@ -4,6 +4,7 @@ import (
 	"context"
 	"eventify/config"
 	"eventify/models"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,8 @@ import (
 func JoinEvent(c *gin.Context) {
 	userID := c.GetInt("user_id")
 	eventID := c.Param("id")
-
+	
+	fmt.Println("DEBUG userID:", userID, "eventID:", eventID)
 	// cek apakah event ada
 	var exists bool
 	err := config.DB.QueryRow(
@@ -60,7 +62,10 @@ func MyTickets(c *gin.Context) {
 
 	rows, err := config.DB.Query(
 		context.Background(),
-		"SELECT id, event_id, status FROM tickets WHERE user_id=$1",
+		`SELECT t.id, t.event_id, t.status, e.title 
+		FROM tickets t 
+		JOIN events e ON e.id = t.event_id
+		WHERE t.user_id=$1`,
 		userID,
 	)
 	if err != nil {
@@ -72,7 +77,7 @@ func MyTickets(c *gin.Context) {
 	var tickets []models.Ticket
 	for rows.Next() {
 		var t models.Ticket
-		if err := rows.Scan(&t.ID, &t.EventID, &t.Status); err != nil {
+		if err := rows.Scan(&t.ID, &t.EventID, &t.Status, &t.EventName); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -86,7 +91,10 @@ func MyTickets(c *gin.Context) {
 func ListTickets(c *gin.Context) {
 	rows, err := config.DB.Query(
 		context.Background(),
-		"SELECT id, user_id, event_id, status FROM tickets",
+		`SELECT t.id, t.user_id, u.name, t.event_id, e.title, t.status 
+		FROM tickets t
+		JOIN users u ON t.user_id = u.id
+		JOIN events e ON t.event_id = e.id`,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -97,7 +105,7 @@ func ListTickets(c *gin.Context) {
 	var tickets []models.Ticket
 	for rows.Next() {
 		var t models.Ticket
-		if err := rows.Scan(&t.ID, &t.UserID, &t.EventID, &t.Status); err != nil {
+		if err := rows.Scan(&t.ID, &t.UserID, &t.Username, &t.EventID, &t.EventName, &t.Status); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}

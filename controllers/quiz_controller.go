@@ -35,19 +35,50 @@ func CreateQuiz(c *gin.Context) {
 }
 
 func GetQuizByEvent(c *gin.Context) {
+	userID := c.GetInt("user_id")
 	eventID := c.Param("id")
 
-	var quiz models.Quiz
-
+	var joined bool
 	err := config.DB.QueryRow(
 		context.Background(),
-		`SELECT id, question, options FROM quizzes WHERE id = $1`, eventID,
-	).Scan(&quiz.ID, &quiz.Question, &quiz.Options)
-
+		"SELECT EXISTS(SELECT 1 FROM tickets WHERE user_id=$1 AND event_id=$2)",
+		userID, eventID,
+	).Scan(&joined)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "quiz event not found"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if !joined {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you must join this event to access quizzes"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": quiz})
+	rows, err := config.DB.Query(
+		context.Background(),
+		`SELECT id, event_id, question, options 
+		FROM quizzes 
+		WHERE event_id = $1`, eventID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var quizzes []models.Quiz
+	for rows.Next() {
+		var q models.Quiz
+		if err := rows.Scan(&q.ID, &q.EventID, &q.Question, &q.Options); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		quizzes = append(quizzes, q)
+	}
+
+	if len(quizzes) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "no quizzes found for this event"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": quizzes})
 }

@@ -27,19 +27,28 @@ func Auth(roleRequired string) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid claims"})
 			c.Abort()
 			return
 		}
+
 		if roleRequired != "" && claims["role"] != roleRequired {
 			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 			c.Abort()
 			return
 		}
 
-		c.Set("user_id", claims["user_id"])
+		idFloat, ok := claims["user_id"].(float64)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user id in token"})
+			c.Abort()
+			return
+		}
+
+		c.Set("user_id", int(idFloat))
 		c.Set("role", claims["role"])
 		c.Next()
 	}

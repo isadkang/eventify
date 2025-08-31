@@ -81,25 +81,30 @@ func UpdateEvent(c *gin.Context) {
 	var in models.Event
 
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
 	var updated models.Event
 	err := config.DB.QueryRow(
 		context.Background(),
-		`UPDATE INTO events
-		SET title=$1, description=$2, date=$3, location=$4, quota=$5
-		WHERE id = $6
-		RETURNING id, title`,
+		`UPDATE events
+		 SET title=$1, description=$2, date=$3, location=$4, quota=$5
+		 WHERE id=$6
+		 RETURNING id, title, description, date, location, quota, created_at`,
 		in.Title, in.Description, in.Date, in.Location, in.Quota, id,
-	).Scan(&in.Title)
+	).Scan(&updated.ID, &updated.Title, &updated.Description, &updated.Date,
+		&updated.Location, &updated.Quota, &updated.CreatedAt)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "event updated!", "data": updated})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "event updated!",
+		"data":    updated,
+	})
 }
 
 func DeleteEvent(c *gin.Context) {

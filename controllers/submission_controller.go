@@ -10,12 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SubmitQuiz - user mengirim jawaban untuk quiz event tertentu
 func SubmitQuiz(c *gin.Context) {
 	userID := c.GetInt("user_id")
 	eventID := c.Param("id")
 
-	// Ambil quiz untuk event ini
 	rows, err := config.DB.Query(
 		context.Background(),
 		`SELECT id, answer_key FROM quizzes WHERE event_id = $1`, eventID,
@@ -36,25 +34,38 @@ func SubmitQuiz(c *gin.Context) {
 		return
 	}
 
-	// Mapping jawaban benar
 	correctAnswers := make(map[int]string)
 	for rows.Next() {
 		var qid int
 		var ans string
-		rows.Scan(&qid, &ans)
-		correctAnswers[qid] = ans
-	}
-
-	// Hitung score
-	score := 0
-	for _, ans := range answers {
-		if correctAnswers[ans.QuizID] == ans.Answer {
-			score++
+		if err := rows.Scan(&qid, &ans); err == nil {
+			correctAnswers[qid] = ans
 		}
 	}
 
+	totalQuestions := len(correctAnswers)
+	if totalQuestions == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no quizzes for this event"})
+		return
+	}
+
+	pointPerQuestion := 100 / totalQuestions
+	score := 0
+	correctCount := 0
+
+	for _, ans := range answers {
+		if correctAnswers[ans.QuizID] == ans.Answer {
+			score += pointPerQuestion
+			correctCount++
+		}
+	}
+
+	if correctCount == totalQuestions {
+		score = 100
+	}
+
 	status := "failed"
-	if score >= len(correctAnswers)/2 {
+	if score >= 50 {
 		status = "passed"
 	}
 
@@ -76,16 +87,20 @@ func SubmitQuiz(c *gin.Context) {
 	})
 }
 
+
 func MyQuizSubmissions(c *gin.Context) {
 	userID := c.GetInt("user_id")
 
 	rows, err := config.DB.Query(
 		context.Background(),
-		`SELECT id, user_id, event_id, score, status, submitted_at 
-		 FROM quiz_submissions WHERE user_id = $1 ORDER BY submitted_at DESC`, userID,
+		`SELECT q.id, q.user_id, u.name, q.event_id, e.title, q.score, q.status, q.submitted_at 
+		 FROM quiz_submissions q 
+		 JOIN users u ON q.user_id = u.id
+		 JOIN events e ON q.event_id = e.id
+		 WHERE q.user_id = $1 ORDER BY q.submitted_at DESC`, userID,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch submissions"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	defer rows.Close()
@@ -94,7 +109,7 @@ func MyQuizSubmissions(c *gin.Context) {
 	for rows.Next() {
 		var sub models.QuizSubmission
 		var score sql.NullInt32
-		if err := rows.Scan(&sub.ID, &sub.UserID, &sub.EventID, &score, &sub.Status, &sub.SubmittedAt); err == nil {
+		if err := rows.Scan(&sub.ID, &sub.UserID, &sub.Username ,&sub.EventID, &sub.EventTitle, &score, &sub.Status, &sub.SubmittedAt); err == nil {
 			if score.Valid {
 				val := int(score.Int32)
 				sub.Score = &val

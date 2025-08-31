@@ -8,6 +8,6 @@ type Event struct {
 	Description string    `json:"description"`
 	Date        time.Time `json:"date"`
 	Location    string    `json:"location"`
-	Quota       string    `json:"quota"`
+	Quota       int    `json:"quota"`
 	CreatedAt   time.Time `json:"created_at"`
 }

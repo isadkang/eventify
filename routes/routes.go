@@ -47,7 +47,7 @@ func Setup() *gin.Engine {
 		admin.PUT("/tickets/:id/approve", controllers.ApproveTicket)
 		admin.PUT("/tickets/:id/reject", controllers.RejectTicket)
 
-		api.POST("/events/:id/quizzes", controllers.CreateQuiz)
+		admin.POST("/events/:id/quizzes", controllers.CreateQuiz)
 		admin.GET("/events/:id/quizzes/submissions", controllers.ListQuizSubmissionsByEvent)
 	}
 
