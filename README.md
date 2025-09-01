@@ -5,57 +5,51 @@ Mendukung dua role utama:
 - **User (peserta)**: bisa register, login, join event, melihat tiket, mengerjakan quiz.  
 - **Admin**: bisa mengelola user, event, tiket, dan quiz.
 
----
-
 ## 🚀 Tech Stack
 - [Golang](https://go.dev/) (Gin Framework)
 - [PostgreSQL](https://www.postgresql.org/)
 - [Railway](https://railway.app/) (deployment)
 
----
-
 ## 📦 Setup Project
 
 1. **Clone repo**
-   ```bash
+```bash
    git clone https://github.com/username/eventify.git
    cd eventify
-````
+```
 
 2. **Copy `.env` file**
 
-   ```bash
+```bash
    cp .env.example .env
-   ```
+```
 
-   Sesuaikan value:
+Sesuaikan value:
 
-   ```env
+```env
    DATABASE_URL=postgres://user:password@localhost:5432/eventify?sslmode=disable
    JWT_SECRET=supersecret
-   ```
+```
 
 3. **Install dependencies**
 
-   ```bash
+```bash
    go mod tidy
-   ```
+```
 
 4. **Run migration (contoh pakai goose)**
 
-   ```bash
+```bash
    goose up
-   ```
+```
 
 5. **Run server**
 
-   ```bash
+```bash
    go run main.go
-   ```
+```
 
-   Server akan jalan di `http://localhost:8080`.
-
----
+Server akan jalan di `http://localhost:8080`.
 
 ## 🔑 Authentication Flow
 
@@ -63,11 +57,9 @@ Mendukung dua role utama:
 * **Login** → akan mengembalikan **JWT Token**.
 * Gunakan token tersebut di **Authorization Header**:
 
-  ```
+```
   Authorization: Bearer <token>
-  ```
-
----
+```
 
 ## 📖 API Endpoints
 
@@ -131,7 +123,6 @@ Mendukung dua role utama:
 }
 ```
 
----
 
 #### `POST /api/events/:id/join`
 
@@ -145,8 +136,6 @@ Join ke sebuah event.
   "ticket_id": 5
 }
 ```
-
----
 
 #### `GET /api/tickets`
 
@@ -166,8 +155,6 @@ Join ke sebuah event.
 ]
 ```
 
----
-
 #### `GET /api/events/:id/quizzes`
 
 **Response**
@@ -183,8 +170,6 @@ Join ke sebuah event.
   }
 ]
 ```
-
----
 
 #### `POST /api/events/:id/quizzes/submit`
 
@@ -207,8 +192,6 @@ Join ke sebuah event.
 }
 ```
 
----
-
 #### `GET /api/quizzes/submissions/me`
 
 **Response**
@@ -228,8 +211,6 @@ Join ke sebuah event.
 ]
 ```
 
----
-
 ### Admin (Auth: role = admin)
 
 #### `GET /api/admin/dashboard`
@@ -246,8 +227,6 @@ Dashboard statistik (jumlah user, event, ticket, quiz, dll).
 }
 ```
 
----
-
 #### `GET /api/admin/users`
 
 Daftar semua user.
@@ -255,8 +234,6 @@ Daftar semua user.
 #### `GET /api/admin/users/:id`
 
 Detail user berdasarkan ID.
-
----
 
 #### `GET /api/admin/events`
 
@@ -292,7 +269,6 @@ List event.
 }
 ```
 
----
 
 #### `PUT /api/admin/tickets/:id/approve`
 
@@ -314,7 +290,6 @@ List event.
 }
 ```
 
----
 
 #### `POST /api/admin/events/:id/quizzes`
 
@@ -324,7 +299,6 @@ Tambah quiz ke event.
 
 Lihat semua submission quiz untuk event tertentu.
 
----
 
 ## 📝 Notes
 
@@ -332,7 +306,6 @@ Lihat semua submission quiz untuk event tertentu.
 * Semua endpoint **Admin** perlu JWT dengan role `admin`.
 * Model JSON response sudah disesuaikan dengan struktur di `models/`.
 
----
 
 ## 🤔 Kenapa Strukturnya Begini?
 
@@ -340,5 +313,3 @@ Lihat semua submission quiz untuk event tertentu.
 * **Models terpisah**: bikin gampang maintenance & mapping DB.
 * **JWT Auth**: lebih aman & scalable untuk multi-role.
 * **PostgreSQL**: powerful relational DB untuk handle relasi user-event-ticket-quiz.
-
----
